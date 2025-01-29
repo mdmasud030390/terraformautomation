@@ -1,0 +1,52 @@
+name: Terraform Apply
+
+on:
+  push:
+    branches:
+      - main  # Trigger workflow on push to the main branch
+  pull_request:
+    branches:
+      - main  # Trigger workflow for PRs to the main branch
+
+jobs:
+  terraform:
+    runs-on: ubuntu-latest  # The environment the job will run on
+
+    steps:
+      # Checkout the repository to get access to the files
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      # Set up Terraform
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v1
+        with:
+          terraform_version: '1.5.0'  # Specify the Terraform version
+
+      # Configure AWS credentials (if using AWS as the provider)
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws_access_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws_region: 'us-east-1'  # Set the AWS region
+
+      # Initialize Terraform
+      - name: Terraform Init
+        run: terraform init
+
+      # Validate Terraform code (optional, but recommended)
+      - name: Terraform Validate
+        run: terraform validate
+
+      # Run Terraform Plan to check changes (optional, but useful for validation)
+      - name: Terraform Plan
+        run: terraform plan -out=tfplan
+
+      # Apply Terraform plan
+      - name: Terraform Apply
+        run: terraform apply -auto-approve tfplan
+
+      # Optionally, clean up after Terraform apply (e.g., destroy resources after a test)
+      # - name: Terraform Destroy
+      #   run: terraform destroy -auto-approve
